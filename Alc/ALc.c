@@ -101,7 +101,9 @@ static struct BackendInfo BackendList[] = {
 #ifdef HAVE_OPENSL
     { "opensl", ALCopenslBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
 #endif
-
+#ifdef HAVE_ARCAN
+    { "arcan", ALCarcanBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
+#endif
     { "null", ALCnullBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
 #ifdef HAVE_WAVE
     { "wave", ALCwaveBackendFactory_getFactory, NULL, NULL, NULL, EmptyFuncs },
