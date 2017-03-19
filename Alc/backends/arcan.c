@@ -139,15 +139,13 @@ static int ALCarcanBackend_mixerProc(void *ptr)
             al_nssleep(restTime);
         else while(avail-done >= device->UpdateSize)
         {
-            aluMixData(device, acon->audb, device->UpdateSize);
-            acon->abufused += device->UpdateSize * frame_sz;
-            done += device->UpdateSize;
-            if (arcan_shmif_lock(acon)){
+				    if (arcan_shmif_lock(acon)){
+                aluMixData(device, acon->audb, device->UpdateSize);
+                acon->abufused += device->UpdateSize * frame_sz;
+                done += device->UpdateSize;
                 arcan_shmif_signal(acon, SHMIF_SIGAUD);
                 arcan_shmif_unlock(acon);
             }
-            else
-                acon->abufused = 0;
         }
     }
 
