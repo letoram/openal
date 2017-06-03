@@ -72,6 +72,13 @@ static void ALCarcanBackend_Construct(ALCarcanBackend *self, ALCdevice *device)
     SET_VTABLE2(ALCarcanBackend, ALCbackend, self);
 }
 
+/*
+ * for synch with an arcan client running on a video thread
+ */
+struct primary_udata {
+    uint64_t magic;
+    uint8_t resize_pending;
+};
 
 static int ALCarcanBackend_mixerProc(void *ptr)
 {
@@ -116,6 +123,11 @@ static int ALCarcanBackend_mixerProc(void *ptr)
         return 1;
     }
 
+		struct {
+			uint64_t magic;
+			volatile uint8_t resize_pending;
+		}* sstruct = acon->user;
+
 /* it's not entirely safe to do this here */
     while(!self->killNow && device->Connected)
     {
@@ -139,7 +151,18 @@ static int ALCarcanBackend_mixerProc(void *ptr)
             al_nssleep(restTime);
         else while(avail-done >= device->UpdateSize)
         {
-				    if (arcan_shmif_lock(acon)){
+
+ /* There is a problematic portion here in that a pending resize call would
+  * easily be starved here since this thread is usually created with high
+  * priority, leading to the chance of the audio-drain rate saturating video
+  * locking. The shmif_lock doesn't consider priority, so our best chances are
+  * to have a separate tag for this with a known 4b magic for a side channel */
+						if (sstruct && sstruct->magic == 0xfeedface){
+							while(sstruct->resize_pending)
+								sched_yield();
+						}
+
+            if (arcan_shmif_lock(acon)){
                 aluMixData(device, acon->audb, device->UpdateSize);
                 acon->abufused += device->UpdateSize * frame_sz;
                 done += device->UpdateSize;
