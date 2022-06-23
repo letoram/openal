@@ -166,7 +166,7 @@ static int ALCarcanBackend_mixerProc(void *ptr)
                 aluMixData(device, acon->audb, device->UpdateSize);
                 acon->abufused += device->UpdateSize * frame_sz;
                 done += device->UpdateSize;
-                arcan_shmif_signal(acon, SHMIF_SIGAUD);
+                arcan_shmif_signal(acon, SHMIF_SIGAUD | SHMIF_SIGBLK_NONE);
                 arcan_shmif_unlock(acon);
             }
         }
